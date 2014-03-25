@@ -166,79 +166,93 @@ app.controller('mainController', function( $rootScope , $scope , $sce , $locatio
 		// maybe this is the first data we know of, so setup the D3 objects
 		if ( firstLoad ) 
 		{
+		
+			////////////////////////////
 			// d3
-				svg = d3.select("#svg");
-				gStroke = d3.select("#svg").select("#stroke");
-				gColor = d3.select("#svg").select("#color");
-				gTextTitle = d3.select("#svg").select("#title");
-				gTextValue = d3.select("#svg").select("#value");
+			
+			svg = d3.select("#svg");
+			gStroke = d3.select("#svg").select("#stroke");
+			gColor = d3.select("#svg").select("#color");
+			gTextTitle = d3.select("#svg").select("#title");
+			gTextValue = d3.select("#svg").select("#value");
+						
+			////////////////////////////
+			// clipping			
+			
+			clip = svg.selectAll("clipPath")
+				.data( dataPoints )
+			
+			clip.exit().remove();
+		
+			clip.enter().append("clipPath")			
+				.append("rect")
 				
 				
-				// clipping			
-				clip = svg.selectAll("clipPath")
-					.data( dataPoints )
-				
-				clip.exit().remove();
 			
-				clip.enter().append("clipPath")			
-					.append("rect")
+			////////////////////////////
+			// circle - colored	
 			
-			
-			// circle - colored			
-				circleColored = gColor.selectAll("circle")
-					.data( dataPoints )		
-				;
+			circleColored = gColor.selectAll("circle")
+				.data( dataPoints )		
+			;
 
-				circleColored.exit().remove();
+			circleColored.exit().remove();
 
-				circleColored.enter().append("circle")
-					.attr("r", circleRadius )
-					.attr("fill", function(d) { return d.fillColor;  })
-					.attr("clip-path", function(d){ return "url(#"+d.uniqueid+")"; } )
-					.attr("style","stroke:rgb(0,0,0);stroke-width:0")
-				;
+			circleColored.enter().append("circle")
+				.attr("r", circleRadius )
+				.attr("fill", function(d) { return d.fillColor;  })
+				.attr("clip-path", function(d){ return "url(#"+d.uniqueid+")"; } )
+				.attr("style","stroke:rgb(0,0,0);stroke-width:0")
+			;
 
-				circleColored
-					.attr("cx", function(d) { return d.x; })
-					.attr("cy", function(d) { return d.y; })
-				;
+			circleColored
+				.attr("cx", function(d) { return d.x; })
+				.attr("cy", function(d) { return d.y; })
+			;
+				
 				
 			
-			
+			////////////////////////////			
 			// circle stroked
-				circleStroked = gStroke.selectAll("circle")
-					.data( dataPoints )		
-				;
-
-				circleStroked.exit().remove();
-
-				circleStroked.enter().append("circle")
-					.attr("r", circleRadius )				
-					.attr("style",function(d){return"stroke:"+d.strokeColor+";stroke-width:2;fill:transparent"; })
-					.attr("cx", function(d) { return d.x; })
-					.attr("cy", function(d) { return d.y; })
-				;
-				
-			// text title
-				textTitle = gTextTitle.selectAll("text")
-					.data( dataPoints )
-				;
-
-				textTitle.exit().remove();
-
-				textTitle.enter().append("text")	
-				
-			// text value
-				textValue = gTextValue.selectAll("text")
-					.data( dataPoints )
-				;
-
-				textValue.exit().remove();
-
-				textValue.enter().append("text")	
-
 			
-					
+			circleStroked = gStroke.selectAll("circle")
+				.data( dataPoints )		
+			;
+
+			circleStroked.exit().remove();
+
+			circleStroked.enter().append("circle")
+				.attr("r", circleRadius )				
+				.attr("style",function(d){return"stroke:"+d.strokeColor+";stroke-width:2;fill:transparent"; })
+				.attr("cx", function(d) { return d.x; })
+				.attr("cy", function(d) { return d.y; })
+			;
+			
+			
+			
+			////////////////////////////
+			// text title
+			
+			textTitle = gTextTitle.selectAll("text")
+				.data( dataPoints )
+			;
+
+			textTitle.exit().remove();
+
+			textTitle.enter().append("text")	
+			
+			
+			
+			////////////////////////////	
+			// text value
+			
+			textValue = gTextValue.selectAll("text")
+				.data( dataPoints )
+			;
+
+			textValue.exit().remove();
+
+			textValue.enter().append("text")
 			
 		}
 		
@@ -257,8 +271,7 @@ app.controller('mainController', function( $rootScope , $scope , $sce , $locatio
 				
 				
 		;
-		
-		
+				
 		textTitle
 			.data( dataPoints )
 			.transition()
@@ -277,8 +290,6 @@ app.controller('mainController', function( $rootScope , $scope , $sce , $locatio
 			.attr("y", function(d) { return d.y - 10 - circleRadius + d.clipHeightOffset ; })
 			.text(function(d){ return d.description })
 		;
-		
-		
 		
 		
 		// not a first load any more
