@@ -1,13 +1,11 @@
 
 var app = angular.module( 'ticket-status', ['ngRoute','ui.bootstrap','ui.event','ui.keypress'],
 function( $routeProvider , $locationProvider ){
-
 	  
 });
 
 
 app.factory('api',function( $http , $rootScope ) {
-
 
 	var extendPromise = function( promise )
 	{
@@ -18,7 +16,6 @@ app.factory('api',function( $http , $rootScope ) {
 				{
 					usersCompleteCallback( response );
 					$rootScope.$emit('success',response);
-					
 				} 
 				 
 			});
@@ -67,35 +64,25 @@ app.factory('api',function( $http , $rootScope ) {
 });
 
 
+
 app.controller('mainController', function( $rootScope , $scope , $sce , $location , api ){
 	
+	// data for the ng controller scope
+	$scope.data = {};
+		
 	// update every 3 seconds
 	var updateInterval = 3000;
+	
+	// where to retrieve the data from?
 	var dataURL = "retrieve.php";
 	
+	// the api to access the data
+	var dataAPI = api( dataURL );
 	
-	//
-	
-	var _api = api( dataURL );
-	
-	$scope.data = {};
-	
-	$scope.sum = function(){
-		var total = 0;
-		for (  var x in $scope.data ) 
-		{
-			total += $scope.data[x];
-		}
-		
-		return total;
-	}
-	
-	//
-		
-
-	
+	// no data has been rendered yet
 	var firstLoad = true;
 	
+	// D3 Objects
 	var 
 			svg
 			, gStroke , gColor , gText			
@@ -103,45 +90,55 @@ app.controller('mainController', function( $rootScope , $scope , $sce , $locatio
 		;
 			
 	
-	var calculateDataPoints = function()
+	// the rendering function, get's called on new data arrival
+	var render = function( data )
 	{
 		
 
-		// data points
+		// data points and sum
 		var dataPoints  = [];
 		var dataCount = 0;
-		for (var x in $scope.data)	dataCount++;
+		var dataSum = 0;
+		for (var x in data) 
+		{
+			dataSum += data[x];
+			dataCount++;
+		}
 		
-		
-		// settings
-		var angle = - 3.14/2;
-		var diffAngle = 2*3.14 / dataCount ;
-		
-		var colors = ["steelblue" , "orange" , "brown" , "red" , "yellow"];
-		
+		// width and height of the SVG canvas ( parent DIV element )		
 		var canvasWidth = $("#canvas").width();
 		var canvasHeight = $("#canvas").height();
+		
+		var PI = 3.141;
+		
+		// starting angle for the bowls
+		var angle = -PI / 2;
+		
+		// equally space out the bowles
+		var diffAngle = 2 * PI / dataCount ;
+		
+		// colors in order
+		var fillColors = ["steelblue" , "orange" , "brown" , "red" , "yellow"];
+		var strokeColors = ["darkblue" , "darkorange" , "brown" , "darkred" , "orange"];
+		
+		// offset for the center of bowles
 		var offsetX = canvasWidth / 2;
 		var offsetY = canvasHeight / 2;
 		
+		// bowl size and distance
 		var circleRadius = 100;		
 		var circleDistance = 200;
 		
-		var transitionDuration = 500;		 //ms
-		
-		var dataSum = $scope.sum();
+		// animation duration in ms
+		var transitionDuration = 500;	
 		
 		var i = 0;
 		
-		
-	
-		
 		// create datapoints
-		for (var field in $scope.data)
+		for (var field in data)
 		{
 			
-			
-			var value = $scope.data[field];
+			var value = data[field];
 			var percentage = (value / dataSum);
 			dataPoints.push( 
 				{
@@ -150,20 +147,19 @@ app.controller('mainController', function( $rootScope , $scope , $sce , $locatio
 					,	x: Math.round( offsetX + Math.cos( angle ) * circleDistance )
 					,	y: Math.round( offsetY + Math.sin( angle ) * circleDistance )
 					,	index: field
-					, 	color: colors[ i ]
-					, 	description: field + " : " + value 
-					, 	height: Math.round(percentage * circleRadius * 2)
-							
+					, 	fillColor: fillColors[ i ]
+					, 	strokeColor: strokeColors[ i ]
+					, 	description: field + " : " + value 					
+					, 	clipHeightOffset: Math.round((1-percentage) * circleRadius * 2)
 				}
 			);
 			
 			angle += diffAngle;
-			
 			i++;
 		}
 		
 		
-		
+		// maybe this is the first data we know of, so setup the D3 objects
 		if ( firstLoad ) 
 		{
 			// d3
@@ -192,7 +188,7 @@ app.controller('mainController', function( $rootScope , $scope , $sce , $locatio
 
 				circleColored.enter().append("circle")
 					.attr("r", circleRadius )
-					.attr("fill", function(d) { return d.color;  })
+					.attr("fill", function(d) { return d.fillColor;  })
 					.attr("clip-path", function(d){ return "url(#"+d.index+")"; } )
 					.attr("style","stroke:rgb(0,0,0);stroke-width:0")
 				;
@@ -213,7 +209,9 @@ app.controller('mainController', function( $rootScope , $scope , $sce , $locatio
 
 				circleStroked.enter().append("circle")
 					.attr("r", circleRadius )				
-					.attr("style","stroke:rgb(0,0,0);stroke-width:2;fill:transparent")
+					.attr("style",function(d){return"stroke:"+d.strokeColor+";stroke-width:2;fill:transparent"; })
+					.attr("cx", function(d) { return d.x; })
+					.attr("cy", function(d) { return d.y; })
 				;
 			
 			// text
@@ -230,7 +228,7 @@ app.controller('mainController', function( $rootScope , $scope , $sce , $locatio
 			
 		}
 		
-		// update
+		// update the D3 objects with new data points and styles
 			
 		clip
 			.data( dataPoints )
@@ -239,45 +237,38 @@ app.controller('mainController', function( $rootScope , $scope , $sce , $locatio
 				.transition()
 				.duration( transitionDuration )
 				.attr("x", function(d) { return d.x - circleRadius })
-				.attr("y", function(d) { return d.y + d.height})
+				.attr("y", function(d) { return d.y - circleRadius + d.clipHeightOffset })
 				.attr("width", circleRadius*2 )
-				.attr("height",function(d){
-					return d.height + circleRadius
-				})
+				.attr("height",circleRadius*2 )
 				
-		;
-		
-		circleStroked
-			.data( dataPoints )
-			.attr("cx", function(d) { return d.x; })
-			.attr("cy", function(d) { return d.y; })
+				
 		;
 		
 		text			
 			.data( dataPoints )
+			.transition()
+			.duration( transitionDuration )
+			.attr("x", function(d) { return d.x - 30; })
+			.attr("y", function(d) { return d.y - 10 - circleRadius + d.clipHeightOffset ; })
 			.text(function(d){ return d.description })
 		;
 		
 		
-		//
-
+		// not a first load any more
 		firstLoad = false;
-
-			
 	}
 	
 	
 	var loopIt = function(){
-		_api.call().ready(function(r){
+		dataAPI.call().ready(function(r){
 			$scope.data = r;
-			calculateDataPoints();
+			render( r );
 		});		
 	};
 	
 	
 	loopIt();
 	setInterval( loopIt , updateInterval );
-	
 	
 
 });
