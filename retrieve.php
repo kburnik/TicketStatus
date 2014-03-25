@@ -1,0 +1,1 @@
+<?header("Content-type: application/json");header("Cache-Control:no-store, no-cache, must-revalidate");$data = array(	 "seg1" => rand(1,40)	,"seg2" => rand(1,40)	,"seg3" => rand(1,40)	,"seg4" => rand(1,40)	,"seg5" => rand(1,40));echo json_encode( $data );?>
