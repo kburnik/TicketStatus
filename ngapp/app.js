@@ -69,6 +69,8 @@ app.controller('mainController', function( $rootScope , $scope , $sce , $locatio
 	
 	// data for the ng controller scope
 	$scope.data = {};
+	$scope.info = {};
+		
 		
 	// update every 3 seconds
 	var updateInterval = 3000;
@@ -85,8 +87,8 @@ app.controller('mainController', function( $rootScope , $scope , $sce , $locatio
 	// D3 Objects
 	var 
 			svg
-			, gStroke , gColor , gText			
-			, text , circleStroked, circleColored , clip
+			, gStroke , gColor , gTextTitle, gTextValue			
+			, textValue , textTitle , circleStroked, circleColored , clip
 		;
 			
 	
@@ -118,8 +120,8 @@ app.controller('mainController', function( $rootScope , $scope , $sce , $locatio
 		var diffAngle = 2 * PI / dataCount ;
 		
 		// colors in order
-		var fillColors = ["steelblue" , "orange" , "brown" , "red" , "yellow"];
-		var strokeColors = ["darkblue" , "darkorange" , "brown" , "darkred" , "orange"];
+		var fillColors = ["steelblue" , "orange" , "purple" , "darkred" , "green"];
+		var strokeColors = ["steelblue" , "darkorange" , "purple" , "darkred" , "darkgreen"];
 		
 		// offset for the center of bowles
 		var offsetX = canvasWidth / 2;
@@ -149,8 +151,10 @@ app.controller('mainController', function( $rootScope , $scope , $sce , $locatio
 					,	index: field
 					, 	fillColor: fillColors[ i ]
 					, 	strokeColor: strokeColors[ i ]
-					, 	description: field + " : " + value 					
+					, 	title: field 
+					, 	description: value + " ( " + Math.round( percentage*100 ) + " % )"
 					, 	clipHeightOffset: Math.round((1-percentage) * circleRadius * 2)
+					, 	uniqueid: "dataseg-" + i
 				}
 			);
 			
@@ -166,7 +170,8 @@ app.controller('mainController', function( $rootScope , $scope , $sce , $locatio
 				svg = d3.select("#svg");
 				gStroke = d3.select("#svg").select("#stroke");
 				gColor = d3.select("#svg").select("#color");
-				gText = d3.select("#svg").select("#text");
+				gTextTitle = d3.select("#svg").select("#title");
+				gTextValue = d3.select("#svg").select("#value");
 				
 				
 				// clipping			
@@ -189,7 +194,7 @@ app.controller('mainController', function( $rootScope , $scope , $sce , $locatio
 				circleColored.enter().append("circle")
 					.attr("r", circleRadius )
 					.attr("fill", function(d) { return d.fillColor;  })
-					.attr("clip-path", function(d){ return "url(#"+d.index+")"; } )
+					.attr("clip-path", function(d){ return "url(#"+d.uniqueid+")"; } )
 					.attr("style","stroke:rgb(0,0,0);stroke-width:0")
 				;
 
@@ -213,18 +218,27 @@ app.controller('mainController', function( $rootScope , $scope , $sce , $locatio
 					.attr("cx", function(d) { return d.x; })
 					.attr("cy", function(d) { return d.y; })
 				;
-			
-			// text
-				text = gText.selectAll("text")
+				
+			// text title
+				textTitle = gTextTitle.selectAll("text")
 					.data( dataPoints )
 				;
 
-				text.exit().remove();
+				textTitle.exit().remove();
 
-				text.enter().append("text")						
-					.attr("x", function(d) { return d.x - 30; })
-					.attr("y", function(d) { return d.y; })
+				textTitle.enter().append("text")	
+				
+			// text value
+				textValue = gTextValue.selectAll("text")
+					.data( dataPoints )
 				;
+
+				textValue.exit().remove();
+
+				textValue.enter().append("text")	
+
+			
+					
 			
 		}
 		
@@ -232,19 +246,30 @@ app.controller('mainController', function( $rootScope , $scope , $sce , $locatio
 			
 		clip
 			.data( dataPoints )
-			.attr("id",function(d){ return d.index })
+			.attr("id",function(d){ return d.uniqueid })
 			.select("rect")
 				.transition()
 				.duration( transitionDuration )
 				.attr("x", function(d) { return d.x - circleRadius })
 				.attr("y", function(d) { return d.y - circleRadius + d.clipHeightOffset })
-				.attr("width", circleRadius*2 )
-				.attr("height",circleRadius*2 )
+				.attr("width" , circleRadius * 2 )
+				.attr("height" ,circleRadius * 2 )
 				
 				
 		;
 		
-		text			
+		
+		textTitle
+			.data( dataPoints )
+			.transition()
+			.duration( transitionDuration )
+			.attr("style", "font-weight:bold;text-align:center;")
+			.attr("x", function(d) { return d.x - 20; })
+			.attr("y", function(d) { return d.y - 30 - circleRadius + d.clipHeightOffset ; })
+			.text(function(d){ return d.title })
+		;
+		
+		textValue			
 			.data( dataPoints )
 			.transition()
 			.duration( transitionDuration )
@@ -254,6 +279,8 @@ app.controller('mainController', function( $rootScope , $scope , $sce , $locatio
 		;
 		
 		
+		
+		
 		// not a first load any more
 		firstLoad = false;
 	}
@@ -261,8 +288,9 @@ app.controller('mainController', function( $rootScope , $scope , $sce , $locatio
 	
 	var loopIt = function(){
 		dataAPI.call().ready(function(r){
-			$scope.data = r;
-			render( r );
+			$scope.data = r.data;
+			$scope.info = r.info;
+			render( r.data );
 		});		
 	};
 	
