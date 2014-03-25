@@ -69,11 +69,16 @@ app.factory('api',function( $http , $rootScope ) {
 
 app.controller('mainController', function( $rootScope , $scope , $sce , $location , api ){
 	
-	var _api = api("retrieve.php");
+	// update every 3 seconds
+	var updateInterval = 3000;
+	var dataURL = "retrieve.php";
+	
+	
+	//
+	
+	var _api = api( dataURL );
 	
 	$scope.data = {};
-	$scope.dataPoints = {};
-	$scope.sum = 0;
 	
 	$scope.sum = function(){
 		var total = 0;
@@ -84,6 +89,8 @@ app.controller('mainController', function( $rootScope , $scope , $sce , $locatio
 		
 		return total;
 	}
+	
+	//
 		
 
 	
@@ -91,20 +98,19 @@ app.controller('mainController', function( $rootScope , $scope , $sce , $locatio
 	
 	var 
 			svg
-			, gStroke, gColor, gText			
+			, gStroke , gColor , gText			
 			, text , circleStroked, circleColored , clip
 		;
-		
 			
 	
 	var calculateDataPoints = function()
 	{
 		
+
+		// data points
 		var dataPoints  = [];
-	
 		var dataCount = 0;
-		for (var x in $scope.data)		
-			dataCount++;
+		for (var x in $scope.data)	dataCount++;
 		
 		
 		// settings
@@ -127,7 +133,10 @@ app.controller('mainController', function( $rootScope , $scope , $sce , $locatio
 		
 		var i = 0;
 		
+		
 	
+		
+		// create datapoints
 		for (var field in $scope.data)
 		{
 			
@@ -267,7 +276,7 @@ app.controller('mainController', function( $rootScope , $scope , $sce , $locatio
 	
 	
 	loopIt();
-	setInterval( loopIt , 3000 );
+	setInterval( loopIt , updateInterval );
 	
 	
 
