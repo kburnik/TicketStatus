@@ -202,7 +202,7 @@ app.controller('mainController', function( $rootScope , $scope , $sce , $locatio
 				.attr("r", circleRadius )
 				.attr("fill", function(d) { return d.fillColor;  })
 				.attr("clip-path", function(d){ return "url(#"+d.uniqueid+")"; } )
-				.attr("style","stroke:rgb(0,0,0);stroke-width:0")
+				.attr("style","stroke:rgb(0,0,0);stroke-width:0;z-index:10000;")				
 			;
 
 			circleColored
@@ -223,7 +223,7 @@ app.controller('mainController', function( $rootScope , $scope , $sce , $locatio
 
 			circleStroked.enter().append("circle")
 				.attr("r", circleRadius )				
-				.attr("style",function(d){return"stroke:"+d.strokeColor+";stroke-width:2;fill:transparent"; })
+				.attr("style",function(d){return"stroke:"+d.strokeColor+";stroke-width:2;fill:white;filter:url(#dropshadow)"; })
 				.attr("cx", function(d) { return d.x; })
 				.attr("cy", function(d) { return d.y; })
 			;
